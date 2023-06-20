@@ -8,6 +8,7 @@ from django.conf import settings
 from rest_framework.response import Response
 from .models import Tasks
 from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import default_storage
 
 def index(request):
     return HttpResponse('index')
@@ -25,6 +26,25 @@ def fetch_pending(request,username):
     response_data={"tasklist":task_list}
     return response_data
 
+
+def fetch_done(request,username):
+    record=Tasks.objects.filter(username=username,status="done")
+    print(record)
+    task_list=[]
+    description=[]
+    file_list=[]
+    for item in record:
+        task_list.append(item.task)
+        description.append(item.description)
+        file_url = request.build_absolute_uri(item.file.url)
+        file_list.append(file_url)
+    response_data={
+        "tasks":task_list,
+        "description":description,
+        "files":file_list
+    }
+    return response_data
+
 def fetch_total(request,username):
     record=Tasks.objects.filter(username=username).values()
     task_list=[]
@@ -35,10 +55,12 @@ def fetch_total(request,username):
     response_data={"tasklist":task_list,"statuslist":status_list}
     return response_data
 
-def update(request,username,task,description,status):
+def update(request,username,task,description,status,upload_file):
     record=Tasks.objects.filter(username=username,task=task,status='pending').first()
     record.description=description
     record.status='done'
+    task_directory = 'taskfiles/'
+    record.file = default_storage.save(task_directory + upload_file.name, upload_file)
     record.save()
     response_data={"message":"Task status updated successfully"}
     return response_data
@@ -59,7 +81,8 @@ class Todo(APIView):
                 response=fetch_pending(request,username)
             if Type=='fetch_total':
                 response=fetch_total(request,username)
-
+            if Type == 'fetch_done':
+                response = fetch_done(request,username)
 
             return JsonResponse(response)
             
@@ -80,7 +103,7 @@ class Todo(APIView):
             if Type == 'insert':
                 response=insert(request,username,task,description,status)
             if Type == 'update':
-                response=update(request,username,task,description,status)
+                response=update(request,username,task,description,status,uploaded_file)
 
             return JsonResponse(response)
                 
