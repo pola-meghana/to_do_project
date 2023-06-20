@@ -167,7 +167,7 @@ if 'logged_in' in st.session_state and st.session_state['logged_in']:
                                             update_message=update_response.json()
                                             st.write(update_message['message'])
 
-    col1,col2 = st.columns([1,9])
+    col1,col2 = st.columns([5,5])
     if selected=="History":
         col1,col2=st.columns(2)
 
@@ -184,7 +184,7 @@ if 'logged_in' in st.session_state and st.session_state['logged_in']:
                 df = pd.DataFrame(task_history)
                 df.index = [i+1 for i in range(len(df))]
                 df.index.name = 'S.No'
-                st.write(df, height=None)
+                st.write(df, height=350)
 
         with col2:
             params={
